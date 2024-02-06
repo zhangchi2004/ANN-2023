@@ -1,2 +1,7 @@
 # ANN-2023
-Homework for the 2023 Artificial Neural Network course at Tsinghua University
+
+本仓库为清华大学2023秋《人工神经网络》课程的全部小作业。
+
+对于初学者，使用pytorch时经常会遇到各种bug，跑通代码并不容易，大家可以参考本仓库的代码。但需要注意ANN作业有代码查重，最好不要直接照抄。
+
+四次作业得分分别为14，15.5，15.5，15。本人水平有限。
