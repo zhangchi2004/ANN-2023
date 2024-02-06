@@ -1,0 +1,113 @@
+########################
+# Additional Files
+########################
+# README.md
+
+########################
+# Filled Code
+########################
+# ..\codes\GAN\GAN.py:1
+            nn.ConvTranspose2d(latent_dim, 4*hidden_dim, kernel_size=4, stride=1, padding=0),
+            nn.BatchNorm2d(4*hidden_dim),
+            nn.ReLU(),
+            nn.ConvTranspose2d(4*hidden_dim, 2*hidden_dim, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(2*hidden_dim),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(2*hidden_dim, hidden_dim, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(hidden_dim),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(hidden_dim, num_channels, kernel_size=4, stride=2, padding=1),
+            nn.Tanh()
+        )
+
+# ..\codes\GAN\trainer.py:1
+        D_real = self._netD(real_imgs)
+        valid = torch.ones_like(D_real, device=self._device)
+        loss_D_real = BCE_criterion(D_real, valid)
+        D_x = D_real.mean()
+        loss_D_real.backward()
+
+# ..\codes\GAN\trainer.py:2
+        D_fake = self._netD(fake_imgs)
+        fake = torch.zeros_like(D_fake, device=self._device)
+        loss_D_fake = BCE_criterion(D_fake, fake)
+        D_G_z1 = D_fake.mean()
+        loss_D_fake.backward(retain_graph=True)
+
+# ..\codes\GAN\trainer.py:3
+        D_fake_new = self._netD(fake_imgs)
+        valid = torch.ones_like(D_fake_new, device=self._device)
+        loss_G = BCE_criterion(D_fake_new, valid)
+        D_G_z2 = D_fake_new.mean()
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes\GAN\main.py -> ..\codes\GAN\main.py
+# 5 -
+# 5 + import torchvision.utils as tvu
+# 12 +
+# 13 + from torchvision.utils import make_grid
+# 14 + from torchvision.utils import save_image
+# 15 + from torch.nn.functional import interpolate
+# 33 +
+# 34 +     parser.add_argument('--interp', action="store_true")
+# 35 +     parser.add_argument('--interp_nums', default=10, type=int)
+# 36 +     parser.add_argument('--interp_left',default=0, type=float)
+# 37 +     parser.add_argument('--interp_right',default=1, type=float)
+# 38 +
+# 39 +     parser.add_argument('--generate',action="store_true")
+# 40 +     parser.add_argument('--sample_num', default=100, type=int)
+# 41 +
+# 31 -     config = 'z-{}_batch-{}_num-train-steps-{}'.format(args.latent_dim, args.batch_size, args.num_training_steps)
+# 44 +     config = 'z-{}_hidden-{}_batch-{}_num-train-steps-{}'.format(args.latent_dim, args.generator_hidden_dim, args.batch_size, args.num_training_steps)
+# 44 ?                ++++++++++                                                              +++++++++++++++++++++++++++
+# 63 +     if args.interp:
+# 64 +         with torch.no_grad():
+# 65 +             interp_imgs = None
+# 66 +             for i in range(10):
+# 67 +                 nums = args.interp_nums
+# 68 +                 left = args.interp_left
+# 69 +                 right = args.interp_right
+# 70 +
+# 71 +                 vec1 = torch.randn(1, netG.latent_dim, 1, device=device)
+# 72 +                 vec2 = torch.randn(1, netG.latent_dim, 1, device=device)
+# 73 +                 weights = torch.linspace(left, right, nums, device=device)
+# 74 +                 vecs = torch.lerp(vec1, vec2, weights)
+# 75 +                 vecs = vecs.transpose(1,2).view(nums, netG.latent_dim, 1, 1)
+# 76 +
+# 77 +                 if interp_imgs is None:
+# 78 +                     interp_imgs = netG.forward(vecs)
+# 79 +                 else:
+# 80 +                     interp_imgs = torch.cat((interp_imgs, netG.forward(vecs)), 0)
+# 81 +                 print(interp_imgs.shape)
+# 82 +             imgs = make_grid(interp_imgs, nrow=nums, pad_value=0) *0.5 + 0.5
+# 83 +             save_image(imgs,"interpolation/interpolation.png")
+# 84 +             exit(0)
+# 85 +
+# 86 +     if(args.generate):
+# 87 +         with torch.no_grad():
+# 88 +             samples = None
+# 89 +             while samples is None or samples.size(0) < args.sample_num:
+# 90 +                 imgs = netG.forward(torch.randn(1, netG.latent_dim, 1, 1, device=device))
+# 91 +                 if samples is None:
+# 92 +                     samples = imgs
+# 93 +                 else:
+# 94 +                     samples = torch.cat((samples, imgs), 0)
+# 95 +             imgs = make_grid(samples, nrow=10, pad_value=0) *0.5 + 0.5
+# 96 +             save_image(imgs,"samples/samples.png")
+# 97 +             exit(0)
+# 98 +
+# 109 +
+# 110 +
+# _codes\GAN\trainer.py -> ..\codes\GAN\trainer.py
+# 78 -
+# 84 +
+

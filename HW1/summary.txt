@@ -1,0 +1,291 @@
+########################
+# Additional Files
+########################
+# run_colab.ipynb
+# __pycache__
+# README
+# test_gpu_colab.ipynb
+
+########################
+# Filled Code
+########################
+# ..\codes\loss.py:1
+        batch_size = input.shape[0]
+        output = np.sum((input - target)**2) / batch_size
+        return output
+
+# ..\codes\loss.py:2
+        gradient = 2 * (input - target)
+        return gradient
+
+# ..\codes\loss.py:3
+        batch_size = input.shape[0]
+        max = np.max(input, axis=1, keepdims=True)
+        p = np.exp(input-max) / np.sum(np.exp(input-max), axis=1, keepdims=True)
+        output = -np.sum(target * np.log(p)) / batch_size
+        return output
+
+# ..\codes\loss.py:4
+        max = np.max(input, axis=1, keepdims=True)
+        return np.exp(input-max) / np.sum(np.exp(input-max), axis=1, keepdims=True) - target
+
+# ..\codes\loss.py:5
+        d = 5
+        batch_size = input.shape[0]
+        xtn = np.sum(input * target, axis=1, keepdims=True)
+        h = np.maximum(0, d - xtn + input)*(1 - target)
+        return np.sum(h) / batch_size
+
+# ..\codes\loss.py:6
+        d = 5
+        xtn = np.sum(input * target, axis=1, keepdims=True)
+        grad_not_t = ((d - xtn + input) > 0) * (1 - target)
+        grad_t = -np.sum(grad_not_t, axis=1, keepdims=True) * target
+        return grad_t + grad_not_t
+
+# ..\codes\loss.py:7
+        a = np.array(self.alpha)
+        g = self.gamma
+        batch_size = input.shape[0]
+        max = np.max(input, axis=1, keepdims=True)
+        p = np.exp(input-max) / np.sum(np.exp(input-max), axis=1, keepdims=True)
+        e = (a * target + (1 - a) * (1 - target)) * (1 - p)**g * target * np.log(p)
+        return -np.sum(e) / batch_size
+
+# ..\codes\loss.py:8
+        a = np.array(self.alpha)
+        g = self.gamma
+        max = np.max(input, axis=1, keepdims=True)
+        p = np.exp(input-max) / np.sum(np.exp(input-max), axis=1, keepdims=True)
+        deleh = (a * target + (1 - a) * (1 - target)) * (g * (1 - p)**(g - 1) * target * np.log(p) - (1 - p)**g * target / p)
+        N = p.shape[0]
+        K = p.shape[1]
+        p_colvec = p.reshape(N, 1, K)
+        p_rowvec = p.reshape(N, K, 1)
+        I = np.eye(K)
+        delhx = - p_rowvec @ p_colvec + I * p_colvec
+        return np.sum(delhx * deleh[:,np.newaxis,:],axis=2)
+
+# ..\codes\layers.py:1
+        l = 1.0507
+        a = 1.67326
+        self._saved_for_backward(input)
+        output = l * input * (input>0) + l*a*(np.exp(input) - 1) * (input<=0)
+        self._saved_for_backward_2(output)
+        return output
+
+# ..\codes\layers.py:2
+        l = 1.0507
+        a = 1.67326
+        input = self._saved_tensor
+        output = self._saved_tensor_2
+        return grad_output * (l * (input>0) + (output + l*a) * (input<=0))
+
+# ..\codes\layers.py:3
+        self._saved_for_backward(input)
+        middle = 1 + np.exp(-input)
+        self._saved_for_backward_2(middle)
+        output = input / middle
+        return output
+
+# ..\codes\layers.py:4
+        input = self._saved_tensor
+        middle = self._saved_tensor_2
+        return grad_output * ((middle + input * (middle - 1))/(middle ** 2))
+
+# ..\codes\layers.py:5
+        c = 0.044715
+        self._saved_for_backward(input)
+        middle = np.sqrt(2/np.pi) * (input + c * (input ** 3))
+        self._saved_for_backward_2(middle)
+        output = 0.5 * input * (1 + np.tanh(middle))
+        return output
+
+# ..\codes\layers.py:6
+        input = self._saved_tensor
+        middle = self._saved_tensor_2
+        return grad_output * (0.5 * (1 + np.tanh(middle)) + (0.0535161 * (input**3) + 0.398942 * input) * (1/np.cosh(middle))**2)
+
+# ..\codes\layers.py:7
+        output = input @ self.W + self.b
+        self._saved_for_backward(input)
+        return output
+
+# ..\codes\layers.py:8
+        grad_input = grad_output @ self.W.T
+        self.grad_W = self._saved_tensor.T @ grad_output
+        self.grad_b = np.sum(grad_output)
+        return grad_input
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes\solve_net.py -> ..\codes\solve_net.py
+# 20 +     #ADDED
+# 21 +     total_loss_list = []
+# 22 +     total_acc_list = []
+# 30 +
+# 44 +         #ADDED
+# 45 +         total_loss_list.append(loss_value)
+# 46 +         total_acc_list.append(acc_value)
+# 53 +     #ADDED
+# 54 +     return np.mean(total_loss_list), np.mean(total_acc_list)
+# 51 -
+# 60 +     #ADDED
+# 61 +     total_loss_list = []
+# 62 +     total_acc_list = []
+# 63 +
+# 71 +         #ADDED
+# 72 +         total_loss_list.append(loss_value)
+# 73 +         total_acc_list.append(acc_value)
+# 77 +
+# 78 +     #ADDED
+# 79 +     return np.mean(total_loss_list), np.mean(total_acc_list)
+# _codes\loss.py -> ..\codes\loss.py
+# 101 +
+# _codes\utils.py -> ..\codes\utils.py
+# 5 -
+# 5 + #ADDED
+# 6 + import matplotlib.pyplot as plt
+# 23 +
+# 24 + #ADDED
+# 25 + def plot_info(loss_list,acc_list,test_loss_list,test_acc_list,pic_name):
+# 26 +     plt.figure()
+# 27 +     plt.plot(loss_list)
+# 28 +     plt.plot(test_loss_list)
+# 29 +     plt.legend(['train_loss','test_loss'])
+# 30 +     plt.grid(True)
+# 31 +     plt.xlabel('epoch')
+# 32 +     plt.ylabel('loss')
+# 33 +     plt.savefig(pic_name+"_loss.png")
+# 34 +     plt.figure()
+# 35 +     plt.plot(acc_list)
+# 36 +     plt.plot(test_acc_list)
+# 37 +     plt.legend(['train_acc','test_acc'])
+# 38 +     plt.grid(True)
+# 39 +     plt.xlabel('epoch')
+# 40 +     plt.ylabel('acc')
+# 41 +     plt.savefig(pic_name+"_acc.png")
+# 42 +
+# _codes\run_mlp.py -> ..\codes\run_mlp.py
+# 8 -
+# 11 - # Your model defintion here
+# 12 - # You should explore different model architecture
+# 10 + all_train_loss = {}
+# 11 + all_train_acc = {}
+# 12 + all_test_loss = {}
+# 13 + all_test_acc = {}
+# 14 + all_training_time = {}
+# 15 + import json
+# 16 + from time import time
+# 17 + def train_model(activate_function,loss_funtion,layernum):
+# 18 +     if(layernum == 1):
+# 13 - model = Network()
+# 19 +         model = Network()
+# 19 ? ++++++++
+# 14 - model.add(Linear('fc1', 784, 10, 0.01))
+# 14 ?                               ^
+# 20 +         model.add(Linear('fc1', 784, 128, 0.01))
+# 20 ? ++++++++                              ^^
+# 21 +         model.add(activate_function('activate'))
+# 22 +         model.add(Linear('fc1', 128, 10, 0.01))
+# 23 +     if(layernum == 2):
+# 24 +         model = Network()
+# 25 +         model.add(Linear('fc1', 784, 128, 0.01))
+# 26 +         model.add(activate_function('activate'))
+# 27 +         model.add(Linear('fc1', 128, 32, 0.01))
+# 28 +         model.add(activate_function('activate'))
+# 29 +         model.add(Linear('fc1', 32, 10, 0.01))
+# 30 +     loss = loss_funtion(name='loss')
+# 16 - loss = MSELoss(name='loss')
+# 32 +     # Training configuration
+# 33 +     # You should adjust these hyperparameters
+# 34 +     # NOTE: one iteration means model forward-backwards one batch of samples.
+# 35 +     #       one epoch means model has gone through all the training samples.
+# 36 +     #       'disp_freq' denotes number of iterations in one epoch to display information.
+# 18 - # Training configuration
+# 19 - # You should adjust these hyperparameters
+# 20 - # NOTE: one iteration means model forward-backwards one batch of samples.
+# 21 - #       one epoch means model has gone through all the training samples.
+# 22 - #       'disp_freq' denotes number of iterations in one epoch to display information.
+# 38 +     config = {
+# 39 +         'learning_rate': 0.00001,
+# 40 +         'weight_decay': 0.1,
+# 41 +         'momentum': 0.9,
+# 42 +         'batch_size': 100,
+# 43 +         'max_epoch': 200,
+# 44 +         'disp_freq': 50,
+# 45 +         'test_epoch': 1
+# 46 +     }
+# 24 - config = {
+# 25 -     'learning_rate': 0.0,
+# 26 -     'weight_decay': 0.0,
+# 27 -     'momentum': 0.0,
+# 28 -     'batch_size': 100,
+# 29 -     'max_epoch': 100,
+# 30 -     'disp_freq': 50,
+# 31 -     'test_epoch': 5
+# 32 - }
+# 48 +     #ADDED
+# 49 +     loss_list = []
+# 50 +     acc_list = []
+# 51 +     test_loss_list = []
+# 52 +     test_acc_list = []
+# 53 +     for epoch in range(config['max_epoch']):
+# 54 +         LOG_INFO('Training @ %d epoch...' % (epoch))
+# 55 +         #ADDED
+# 56 +         loss_result,acc_result = train_net(model, loss, config, train_data, train_label, config['batch_size'], config['disp_freq'])
+# 57 +         loss_list.append(loss_result)
+# 58 +         acc_list.append(acc_result)
+# 59 +         if epoch % config['test_epoch'] == 0:
+# 60 +             LOG_INFO('Testing @ %d epoch...' % (epoch))
+# 61 +             loss_result,acc_result = test_net(model, loss, test_data, test_label, config['batch_size'])
+# 62 +             test_loss_list.append(loss_result)
+# 63 +             test_acc_list.append(acc_result)
+# 65 +     #ADDED
+# 66 +     title = str(activate_function)+' '+str(loss_funtion)+' '+str(layernum)
+# 67 +     all_train_loss[title] = loss_list
+# 68 +     all_train_acc[title] = acc_list
+# 69 +     all_test_loss[title] = test_loss_list
+# 70 +     all_test_acc[title] = test_acc_list
+# 35 - for epoch in range(config['max_epoch']):
+# 36 -     LOG_INFO('Training @ %d epoch...' % (epoch))
+# 37 -     train_net(model, loss, config, train_data, train_label, config['batch_size'], config['disp_freq'])
+# 38 -
+# 39 -     if epoch % config['test_epoch'] == 0:
+# 40 -         LOG_INFO('Testing @ %d epoch...' % (epoch))
+# 41 -         test_net(model, loss, test_data, test_label, config['batch_size'])
+# 72 + activate_function_list = [Selu,Swish,Gelu]
+# 73 + loss_function_list = [MSELoss,SoftmaxCrossEntropyLoss,HingeLoss,FocalLoss]
+# 74 + for activate_funtion in activate_function_list:
+# 75 +     for loss_funtion in loss_function_list:
+# 76 +         for layernum in range(1,3):
+# 77 +             time1 = time()
+# 78 +             train_model(activate_funtion,loss_funtion,layernum)
+# 79 +             time2 = time()
+# 80 +             title = str(activate_funtion)+' '+str(loss_funtion)+' '+str(layernum)
+# 81 +             all_training_time[title] = time2-time1
+# 82 +
+# 83 + with open("all_train_loss.json", 'w') as json_file:
+# 84 +     json.dump(all_train_loss, json_file,indent=4)
+# 85 + with open("all_train_acc.json", 'w') as json_file:
+# 86 +     json.dump(all_train_acc, json_file,indent=4)
+# 87 + with open("all_test_loss.json", 'w') as json_file:
+# 88 +     json.dump(all_test_loss, json_file,indent=4)
+# 89 + with open("all_test_acc.json", 'w') as json_file:
+# 90 +     json.dump(all_test_acc, json_file,indent=4)
+# 91 + with open("all_training_time.json", 'w') as json_file:
+# 92 +     json.dump(all_training_time, json_file,indent=4)
+# _codes\layers.py -> ..\codes\layers.py
+# 9 +         ## ADDED
+# 10 +         self._saved_tensor_2 = None
+# 27 +     ## ADDED
+# 28 +     def _saved_for_backward_2(self, tensor):
+# 29 +         self._saved_tensor_2 = tensor
+# 30 +
+

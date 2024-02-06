@@ -1,0 +1,246 @@
+########################
+# Missing Files
+########################
+# .DS_Store
+
+########################
+# Additional Files
+########################
+# README.txt
+# __pycache__
+# train
+
+########################
+# Filled Code
+########################
+# ..\codes\cnn\model.py:1
+        super(BatchNorm2d, self).__init__()
+        self.weight = Parameter(torch.ones(num_features))
+        self.bias = Parameter(torch.zeros(num_features))
+        self.register_buffer('running_mean', torch.zeros(num_features))
+        self.register_buffer('running_var', torch.ones(num_features))
+        # input: [batch_size, num_feature_map, height, width]
+        if self.training:
+            mean = torch.mean(input, dim=[0, 2, 3])
+            var = torch.var(input, dim=[0, 2, 3])
+            self.running_mean = 0.9 * self.running_mean + 0.1 * mean
+            self.running_var = 0.9 * self.running_var + 0.1 * var
+            input = (input - mean.view(1, -1, 1, 1)) / torch.sqrt(var.view(1, -1, 1, 1) + 1e-5)
+        else:
+            input = (input - self.running_mean.view(1, -1, 1, 1)) / torch.sqrt(self.running_var.view(1, -1, 1, 1) + 1e-5)
+
+# ..\codes\cnn\model.py:2
+        # input: [batch_size, num_feature_map, height, width]
+        if self.training:
+            mask = torch.cuda.FloatTensor(*(input.shape[0],input.shape[1])).uniform_().view(input.shape[0],-1,1,1) > self.p
+            input = input * mask / (1 - self.p)
+
+# ..\codes\cnn\model.py:3
+        self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
+        self.bn1 = BatchNorm2d(32)
+        self.relu1 = nn.ReLU()
+        self.dropout1 = Dropout(drop_rate)
+        self.maxpool1 = nn.MaxPool2d(2, stride=2)
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+        self.bn2 = BatchNorm2d(64)
+        self.relu2 = nn.ReLU()
+        self.dropout2 = Dropout(drop_rate)
+        self.maxpool2 = nn.MaxPool2d(2, stride=2)
+        self.lin1 = nn.Linear(64 * 8 * 8, 10)
+
+
+# ..\codes\cnn\model.py:4
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.dropout1(x)
+        x = self.maxpool1(x)
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
+        x = self.dropout2(x)
+        x = self.maxpool2(x)
+        x = x.view(x.shape[0], -1)
+        logits = self.lin1(x)
+
+# ..\codes\mlp\model.py:1
+        self.weight = Parameter(torch.ones(num_features))
+        self.bias = Parameter(torch.zeros(num_features))
+        self.register_buffer('running_mean', torch.zeros(num_features))
+        self.register_buffer('running_var', torch.ones(num_features))
+        if self.training:
+            mean = torch.mean(input, dim=0)
+            var = torch.var(input, dim=0)
+            self.running_mean = 0.9 * self.running_mean + 0.1 * mean
+            self.running_var = 0.9 * self.running_var + 0.1 * var
+            input = (input - mean) / torch.sqrt(var + 1e-5)
+        else:
+            input = (input - self.running_mean) / torch.sqrt(self.running_var + 1e-5)
+
+        input = input * self.weight + self.bias
+
+# ..\codes\mlp\model.py:2
+        if self.training:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            mask = (torch.rand(input.shape) > self.p).float().to(device)
+            input = input * mask / (1 - self.p)
+
+# ..\codes\mlp\model.py:3
+        self.lin1 = nn.Linear(3 * 32 * 32, 128)
+        self.bn1 = BatchNorm1d(128)
+        self.relu1 = nn.ReLU()
+        self.dropout1 = Dropout(drop_rate)
+        self.lin2 = nn.Linear(128, 10)
+
+# ..\codes\mlp\model.py:4
+        x = self.lin1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.dropout1(x)
+        logits = self.lin2(x)
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes\cnn\model.py -> ..\codes\cnn\model.py
+# 7 + #ADDED
+# 8 + import torch.cuda
+# 7 - class BatchNorm1d(nn.Module):
+# 7 ?                ^
+# 9 + class BatchNorm2d(nn.Module):
+# 9 ?                ^
+# 47 -     def forward(self, x, y=None):
+# 70 +     def forward(self, x, y=None):
+# 70 ?                                  +
+# 90 +         # ADDED
+# 91 +         y = y.long()
+# _codes\cnn\main.py -> ..\codes\cnn\main.py
+# 13 + # ADDED: Changed all load_cifar_2d to load_cifar_4d and import json
+# 15 + import json
+# 101 + #ADDED
+# 102 + train_loss_list = []
+# 103 + train_acc_list = []
+# 104 + val_loss_list = []
+# 105 + val_acc_list = []
+# 108 -         cnn_model = Model(drop_rate=args.drop_rate)
+# 108 ?         ^^^
+# 115 +         mlp_model = Model(drop_rate=args.drop_rate)
+# 115 ?         ^^^
+# 109 -         cnn_model.to(device)
+# 109 ?         ^^^
+# 116 +         mlp_model.to(device)
+# 116 ?         ^^^
+# 110 -         print(cnn_model)
+# 110 ?               ^^^
+# 117 +         print(mlp_model)
+# 117 ?               ^^^
+# 111 -         optimizer = optim.Adam(cnn_model.parameters(), lr=args.learning_rate)
+# 111 ?                                ^^^
+# 118 +         optimizer = optim.Adam(mlp_model.parameters(), lr=args.learning_rate)
+# 118 ?                                ^^^
+# 115 -         # 	cnn_model = torch.load(model_path)
+# 115 ?           	^^^
+# 122 +         # 	mlp_model = torch.load(model_path)
+# 122 ?           	^^^
+# 121 -             train_acc, train_loss = train_epoch(cnn_model, X_train, y_train, optimizer)
+# 121 ?                                                 ^^^
+# 128 +             train_acc, train_loss = train_epoch(mlp_model, X_train, y_train, optimizer)
+# 128 ?                                                 ^^^
+# 124 -             val_acc, val_loss = valid_epoch(cnn_model, X_val, y_val)
+# 124 ?                                             ^^^
+# 131 +             val_acc, val_loss = valid_epoch(mlp_model, X_val, y_val)
+# 131 ?                                             ^^^
+# 129 -                 test_acc, test_loss = valid_epoch(cnn_model, X_test, y_test)
+# 129 ?                                                   ^^^
+# 136 +                 test_acc, test_loss = valid_epoch(mlp_model, X_test, y_test)
+# 136 ?                                                   ^^^
+# 130 -                 with open(os.path.join(args.train_dir, 'checkpoint_{}.pth.tar'.format(epoch)), 'wb') as fout:
+# 137 +                 # with open(os.path.join(args.train_dir, 'checkpoint_{}.pth.tar'.format(epoch)), 'wb') as fout:
+# 137 ?                ++
+# 131 -                     torch.save(cnn_model, fout)
+# 131 ?                  ^^^           ^^^
+# 138 +                 # 	torch.save(mlp_model, fout)
+# 138 ?                 + ^           ^^^
+# 132 -                 with open(os.path.join(args.train_dir, 'checkpoint_0.pth.tar'), 'wb') as fout:
+# 139 +                 # with open(os.path.join(args.train_dir, 'checkpoint_0.pth.tar'), 'wb') as fout:
+# 139 ?                ++
+# 133 -                     torch.save(cnn_model, fout)
+# 133 ?                  ^^^           ^^^
+# 140 +                 # 	torch.save(mlp_model, fout)
+# 140 ?                 + ^           ^^^
+# 154 +             #ADDED
+# 155 +             train_loss_list.append(train_loss)
+# 156 +             train_acc_list.append(train_acc)
+# 157 +             val_loss_list.append(val_loss)
+# 158 +             val_acc_list.append(val_acc)
+# 159 +
+# 151 -
+# 164 +
+# 165 +         #ADDED
+# 166 +         with open("train_loss_list2.json", "w") as f:
+# 167 +             json.dump(train_loss_list, f)
+# 168 +         with open("train_acc_list2.json", "w") as f:
+# 169 +             json.dump(train_acc_list, f)
+# 170 +         with open("val_loss_list2.json", "w") as f:
+# 171 +             json.dump(val_loss_list, f)
+# 172 +         with open("val_acc_list2.json", "w") as f:
+# 173 +             json.dump(val_acc_list, f)
+# 153 -         print("begin testing")
+# 154 -         cnn_model = Model()
+# 154 ?         ^^^
+# 175 +         mlp_model = Model()
+# 175 ?         ^^^
+# 155 -         cnn_model.to(device)
+# 155 ?         ^^^
+# 176 +         mlp_model.to(device)
+# 176 ?         ^^^
+# 158 -             cnn_model = torch.load(model_path)
+# 158 ?             ^^^
+# 179 +             mlp_model = torch.load(model_path)
+# 179 ?             ^^^
+# 164 -             test_image = X_test[i].reshape((1, 3, 32, 32))
+# 164 ?                                                 ^   ^
+# 185 +             test_image = X_test[i].reshape((1, 3 * 32 * 32))
+# 185 ?                                                 ^^   ^^
+# 165 -             result = inference(cnn_model, test_image)[0]
+# 165 ?                                ^^^
+# 186 +             result = inference(mlp_model, test_image)[0]
+# 186 ?                                ^^^
+# 190 +
+# _codes\mlp\model.py -> ..\codes\mlp\model.py
+# 77 +         #ADDED
+# 78 +         y = y.long()
+# _codes\mlp\main.py -> ..\codes\mlp\main.py
+# 14 + #ADDED
+# 15 + import json
+# 101 + #ADDED
+# 102 + train_loss_list = []
+# 103 + train_acc_list = []
+# 104 + val_loss_list = []
+# 105 + val_acc_list = []
+# 108 -         mlp_model = Model(drop_rate=drop_rate)
+# 115 +         mlp_model = Model(drop_rate=args.drop_rate)
+# 115 ?                                     +++++
+# 153 +
+# 154 +             #ADDED
+# 155 +             train_loss_list.append(train_loss)
+# 156 +             train_acc_list.append(train_acc)
+# 157 +             val_loss_list.append(val_loss)
+# 158 +             val_acc_list.append(val_acc)
+# 151 -
+# 164 +
+# 165 +         #ADDED
+# 166 +         with open("train_loss_list.json", "w") as f:
+# 167 +             json.dump(train_loss_list, f)
+# 168 +         with open("train_acc_list.json", "w") as f:
+# 169 +             json.dump(train_acc_list, f)
+# 170 +         with open("val_loss_list.json", "w") as f:
+# 171 +             json.dump(val_loss_list, f)
+# 172 +         with open("val_acc_list.json", "w") as f:
+# 173 +             json.dump(val_acc_list, f)
+

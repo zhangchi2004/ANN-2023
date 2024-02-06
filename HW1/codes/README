@@ -1,0 +1,5 @@
+对代码做了以下修改：
+1. 在 `run_mlp.py` 中，将整个训练过程封装在 `train_model` 函数中，以方便多次调用，尝试不同网络。将训练结果保存在 `all_train_loss` 等4个词典中，存储为 `json` 文件，便于后续绘图。加入训练计时模块。
+2. 在 `utils.py` 中，加入函数 `plot_info` 用来绘制图像。
+3. 在 `layers.py` 中，额外增加 `self._saved_tensor_2`，用来在 `forward` 过程中多存储一个中间结果，在 `backward` 过程中直接使用，减少计算量。
+4. 在 `solve_net.py` 中，修改 `train_net` 和 `test_net` 函数，增加了返回值返回loss和acc等信息，便于之后统计绘图。

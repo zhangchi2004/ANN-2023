@@ -1,0 +1,170 @@
+########################
+# Missing Files
+########################
+# .DS_Store
+
+########################
+# Additional Files
+########################
+# output.txt
+# plot.py
+# readme.md
+# rsel.py
+
+########################
+# Filled Code
+########################
+# ..\codes\model_tfmr.py:1
+            # Reference: https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+            torch.tril(torch.ones(max_positions, max_positions, dtype=torch.uint8).view(1, 1, max_positions, max_positions)),
+
+# ..\codes\model_tfmr.py:2
+        attn_weights = torch.matmul(query, key.transpose(-2, -1))
+            length = value.shape[-1]
+            attn_weights = attn_weights / (length ** 0.5)
+        qlen = query.shape[-2]
+        klen = key.shape[-2]
+        causal_mask = self.bias[...,klen-qlen:klen,:klen]
+        # print(key.shape)
+        # print(query.shape)
+        bias = self.masked_bias.to(attn_weights.dtype)
+        attn_weights = causal_mask * attn_weights + bias * (1 - causal_mask)
+        attn_weights = F.softmax(attn_weights, dim=-1)
+        attn_output = torch.matmul(attn_weights, value)
+
+
+# ..\codes\model_tfmr.py:3
+        return tensor.reshape((tensor.shape[0], tensor.shape[1], num_heads, attn_head_size)).transpose(1, 2)
+
+# ..\codes\model_tfmr.py:4
+        return tensor.transpose(1, 2).reshape((tensor.shape[0], tensor.shape[2], num_heads * attn_head_size))
+
+# ..\codes\model_tfmr.py:5
+        # HINT: You can refer to Page 39 in lecture 8 for more details
+
+        hidden_states = residual + attn_output
+        rs2 = hidden_states
+        hidden_states = self.ln_2(hidden_states)
+        mlp_output = self.mlp(hidden_states)
+        hidden_states = rs2 + mlp_output
+
+
+
+# ..\codes\model_tfmr.py:6
+        length = input_shape[-1]
+        position_ids = torch.arange(past_length, length + past_length, dtype=torch.int, device=device)
+        position_ids = position_ids.view(1,length)
+        position_embeds = self.wpe(position_ids)
+
+
+# ..\codes\model_tfmr.py:7
+            # Reference: https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+            shifted_logits = lm_logits[..., :-1, :].contiguous()
+            shifted_labels = labels[..., 1:].contiguous()
+            position_mask = torch.ones_like(labels)
+            position_mask[:,1:] = (shifted_labels != PAD_ID)
+            position_mask = position_mask.float()
+            position_mask = position_mask[:, :-1].contiguous()
+            ce_loss = ce_loss_fct(shifted_logits.transpose(1,2), shifted_labels)
+            masked_loss = (ce_loss * position_mask).sum(dim=1) / (position_mask.sum(dim=1) + 1e-5)
+            loss = masked_loss.mean()
+
+
+# ..\codes\model_tfmr.py:8
+
+                        sorted_logits, sorted_indices = logits.sort()
+                        cumu = torch.cumsum(F.softmax(sorted_logits,dim=-1),dim=-1)
+
+                        sorted_mask = (cumu < 1-top_p)
+                        mask = sorted_mask.scatter(1,sorted_indices,sorted_mask)
+                        logits = logits + mask * (-1e4)
+
+
+# ..\codes\main.py:1
+            target_ids = input_ids.clone()
+            pred_logits = outputs["logits"]
+
+            shifted_logits = pred_logits[..., :-1, :].contiguous()
+            shifted_labels = target_ids[..., 1:].contiguous()
+            position_mask = torch.ones_like(target_ids).float()
+            position_mask[:,1:] = (shifted_labels != PAD_ID)
+            position_mask = position_mask.float()
+            position_mask = position_mask[:, :-1].contiguous()
+            ce_loss = ce_loss_fct(shifted_logits.transpose(1,2), shifted_labels)
+            loss = (ce_loss * position_mask).sum(dim=1) / (position_mask.sum(dim=1) + 1e-5)
+
+
+
+########################
+# References
+########################
+# https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+
+########################
+# Other Modifications
+########################
+# _codes\model_tfmr.py -> ..\codes\model_tfmr.py
+# 299 -          }
+# 299 ? -
+# 332 +         }
+# _codes\main.py -> ..\codes\main.py
+# 39 - parser.add_argument("--pretrain_dir", type=str, default="None",
+# 39 ?                                                         -    -
+# 39 + parser.add_argument("--pretrain_dir", type=str, default=None,
+# 47 - parser.add_argument("--top_p", type=float, default=1.0,
+# 47 ?                                                    ^ ^
+# 47 + parser.add_argument("--top_p", type=float, default=0.9,
+# 47 ?                                                    ^ ^
+# 48 -     help="The p for top-p sampling. Default: 1.0")
+# 48 ?                                              ^ ^
+# 48 +     help="The p for top-p sampling. Default: 0.9")
+# 48 ?                                              ^ ^
+# 49 -
+# 49 + parser.add_argument("--shuffle", type=bool, default=False)
+# 50 + parser.add_argument("--n_head", type=int, default=12)
+# 100 +     print(len(gen_ids))
+# 101 +     print(len(truth_ids))
+# 102 +
+# 102 -
+# 109 +         weights = tuple(weights)
+# 112 +         print("HERE\n")
+# 115 +         print(values)
+# 142 +
+# 214 +                 model_config["n_head"] = args.n_head
+# 215 +                 print(model_config)
+# 230 +         all_losses_by_iter = []
+# 231 +         epoch_train_loss = []
+# 232 +         epoch_val_loss = []
+# 233 +         epoch_ppl = []
+# 238 +             if(args.shuffle):
+# 239 +                 rng = random.Random(1000*random.random())
+# 240 +                 rng.shuffle(data["train"])
+# 237 -
+# 256 +             all_losses_by_iter.append(losses)
+# 258 +             epoch_train_loss.append(train_loss.item())
+# 259 +             epoch_val_loss.append(val_loss.item())
+# 260 +             epoch_ppl.append(val_ppl)
+# 257 -
+# 279 +         with open(os.path.join(args.train_dir, "losses_by_iter.json"), "w") as f:
+# 280 +             json.dump(all_losses_by_iter, f)
+# 281 +         with open(os.path.join(args.train_dir, "epoch_train_loss.json"), "w") as f:
+# 282 +             json.dump(epoch_train_loss, f)
+# 283 +         with open(os.path.join(args.train_dir, "epoch_val_loss.json"), "w") as f:
+# 284 +             json.dump(epoch_val_loss, f)
+# 285 +         with open(os.path.join(args.train_dir, "epoch_ppl.json"), "w") as f:
+# 286 +             json.dump(epoch_ppl, f)
+# 287 +
+# 266 -         with open(f"output_{args.decode_strategy}.txt", "w") as fout:
+# 296 +         with open(f"{args.train_dir}/output_{args.decode_strategy}_{args.temperature}.txt", "w") as fout:
+# 296 ?                     +++++++++++++++++                             +++++++++++++++++++
+# 269 -                 print(k, out)
+# 299 +                 # print(k, out)
+# 299 ?                 ++
+# 301 +
+# 274 -
+# 305 +         with open(f"{args.train_dir}/metric_{args.decode_strategy}_{args.temperature}.txt", "w") as fout:
+# 306 +             fout.write(f"Perplexity: {test_ppl}\n")
+# 307 +             fout.write(f"Forward BLEU-4: {eval_result['fw-bleu-4']}\n")
+# 308 +             fout.write(f"Bacward BLEU-4: {eval_result['bw-bleu-4']}\n")
+# 309 +             fout.write(f"Harmonic BLEU-4: {eval_result['fw-bw-bleu-4']}\n")
+
